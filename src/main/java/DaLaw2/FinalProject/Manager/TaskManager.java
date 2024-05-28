@@ -38,7 +38,9 @@ public class TaskManager {
             String fileName = ".tasks";
             FileInputStream fileIn = new FileInputStream(fileName);
             ObjectInputStream in = new ObjectInputStream(fileIn);
-            return Optional.of((HashMap<UUID, Task>) in.readObject());
+            @SuppressWarnings("unchecked")
+            HashMap<UUID, Task> result = (HashMap<UUID, Task>) in.readObject();
+            return Optional.of(result);
         } catch (IOException | ClassNotFoundException | ClassCastException e) {
             return Optional.empty();
         }
