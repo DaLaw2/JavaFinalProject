@@ -1,10 +1,12 @@
 package DaLaw2.FinalProject.Manager;
 
+import org.apache.logging.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
 import DaLaw2.FinalProject.Connection.Connection;
 import DaLaw2.FinalProject.Manager.DataClass.Config;
 
-import java.net.Socket;
 import java.util.UUID;
+import java.net.Socket;
 import java.util.HashMap;
 import java.io.IOException;
 import java.net.ServerSocket;
@@ -12,10 +14,11 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 public class ConnectionManager extends Thread {
     private static volatile ConnectionManager instance;
+    private static final Logger logger = LogManager.getLogger(ConnectionManager.class);
     private static final ReentrantReadWriteLock rwLock = new ReentrantReadWriteLock();
 
     private ServerSocket serverSocket;
-    private HashMap<UUID, Connection> connection;
+    private final HashMap<UUID, Connection> connections = new HashMap<>();
 
     private ConnectionManager() {
         Config config;
@@ -23,18 +26,17 @@ public class ConnectionManager extends Thread {
             config = ConfigManager.getConfig();
             try {
                 this.serverSocket = new ServerSocket(config.acceptPort);
-                this.connection = new HashMap<>();
                 break;
             } catch (IOException _) {
+                logger.error("Failed to bind to port {}", config.acceptPort);
                 try {
                     Thread.sleep(config.retryDuration * 1000L);
                 } catch (InterruptedException _) {
+                    logger.error("Thread was interrupted during sleep.");
                 }
-                continue;
             }
         }
     }
-
 
     public static ConnectionManager getInstance() {
         if (instance == null) {
@@ -50,19 +52,40 @@ public class ConnectionManager extends Thread {
         return instance;
     }
 
-    public static void acceptConnection() {
-        Config config;
-        ConnectionManager instance = ConnectionManager.getInstance();
-        while (true) {
-            rwLock.writeLock().lock();
-            try {
-                instance.serverSocket.setSoTimeout(5000);
-                Socket socket = instance.serverSocket.accept();
-            } catch (IOException _) {
-                continue;
-            } finally {
-                rwLock.writeLock().unlock();
+    @Override
+    public void run() {
+        while (!Thread.currentThread().isInterrupted()) {
+            acceptConnection();
+        }
+        logger.info("Connection Manager Terminate Complete.");
+    }
+
+    public void shutdown() {
+        logger.info("Connection Manager Terminating.");
+        interrupt();
+        try {
+            serverSocket.close();
+        } catch (IOException e) {
+            logger.error("Failed to close server socket", e);
+        }
+    }
+
+    private void acceptConnection() {
+        Config config = ConfigManager.getConfig();
+        rwLock.readLock().lock();
+        try {
+            serverSocket.setSoTimeout(config.internalTimestamp);
+            Socket socket = serverSocket.accept();
+            UUID uuid = UUID.randomUUID();
+            Connection connection = new Connection(uuid, socket);
+            connections.put(uuid, connection);
+            logger.info("Accepted new connection: {}", uuid);
+        } catch (IOException e) {
+            if (!Thread.currentThread().isInterrupted()) {
+                logger.error("Failed to accept connection", e);
             }
+        } finally {
+            rwLock.readLock().unlock();
         }
     }
 }

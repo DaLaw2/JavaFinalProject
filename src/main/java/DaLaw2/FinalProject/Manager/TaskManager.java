@@ -41,7 +41,7 @@ public class TaskManager {
             @SuppressWarnings("unchecked")
             HashMap<UUID, Task> result = (HashMap<UUID, Task>) in.readObject();
             return Optional.of(result);
-        } catch (IOException | ClassNotFoundException | ClassCastException e) {
+        } catch (IOException | ClassNotFoundException | ClassCastException _) {
             return Optional.empty();
         }
     }
