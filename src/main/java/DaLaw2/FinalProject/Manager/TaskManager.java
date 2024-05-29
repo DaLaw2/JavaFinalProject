@@ -1,16 +1,20 @@
 package DaLaw2.FinalProject.Manager;
 
 import DaLaw2.FinalProject.Manager.DataClass.Task;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import java.io.*;
-import java.util.UUID;
 import java.util.HashMap;
 import java.util.Optional;
+import java.util.UUID;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 public class TaskManager {
-    private static volatile TaskManager instance;
+    private static volatile TaskManager instance = new TaskManager();
     private static final ReentrantReadWriteLock rwLock = new ReentrantReadWriteLock();
+
+    private static final Logger logger = LogManager.getLogger(TaskManager.class);
 
     private final HashMap<UUID, Task> tasks;
 
@@ -20,16 +24,6 @@ public class TaskManager {
     }
 
     public static TaskManager getInstance() {
-        if (instance == null) {
-            rwLock.writeLock().lock();
-            try {
-                if (instance == null) {
-                    instance = new TaskManager();
-                }
-            } finally {
-                rwLock.writeLock().unlock();
-            }
-        }
         return instance;
     }
 

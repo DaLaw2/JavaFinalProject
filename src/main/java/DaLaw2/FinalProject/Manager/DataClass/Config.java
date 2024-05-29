@@ -3,12 +3,15 @@ package DaLaw2.FinalProject.Manager.DataClass;
 import java.io.Serializable;
 
 public class Config implements Serializable {
-    public int acceptPort;
-    public int startPort;
-    public int endPort;
-    public int internalTimestamp;
-    public int timeoutDuration;
-    public int retryDuration;
+    public int acceptPort = 8080;
+    public int startPort = 60000;
+    public int endPort = 65535;
+    public int internalTimestamp = 10;
+    public int timeoutDuration = 15;
+    public int retryDuration = 15;
+
+    private Config() {
+    }
 
     public Config(int acceptPort, int startPort, int endPort, int internalTimestamp, int timeoutDuration, int retryDuration) {
         this.acceptPort = acceptPort;
@@ -20,20 +23,34 @@ public class Config implements Serializable {
     }
 
     public static Config defaultConfig() {
-        return new Config(8080, 60000, 65535, 10, 15, 15);
+        return new Config();
     }
 
     public static boolean validateConfig(Config config) {
-        if (config.acceptPort < 1 || config.acceptPort > 65535)
+        if (!validatePort(config.acceptPort))
             return false;
-        if (config.startPort < 1 || config.startPort > config.endPort || config.endPort > 65535)
+        if (!validatePortRange(config.startPort, config.endPort))
             return false;
-        if (config.internalTimestamp < 1 || config.internalTimestamp > 60000)
+        if (!validateMiniSecond(config.internalTimestamp))
             return false;
-        if (config.timeoutDuration < 1 || config.timeoutDuration > 3600)
+        if (!validateSecond(config.timeoutDuration))
             return false;
-        if (config.retryDuration < 1 || config.retryDuration > 3600)
-            return false;
-        return true;
+        return validateSecond(config.retryDuration);
+    }
+
+    private static boolean validatePort(int port) {
+        return port >= 1 && port <= 65535;
+    }
+
+    private static boolean validatePortRange(int startPort, int endPort) {
+        return startPort >= 1 && startPort <= 65535 && endPort >= 1 && endPort <= 65535;
+    }
+
+    private static boolean validateMiniSecond(int timestamp) {
+        return timestamp >= 1 && timestamp <= 60000;
+    }
+
+    private static boolean validateSecond(int duration) {
+        return duration >= 1 && duration <= 3600;
     }
 }

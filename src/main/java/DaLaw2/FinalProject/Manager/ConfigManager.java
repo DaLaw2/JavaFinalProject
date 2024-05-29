@@ -1,6 +1,5 @@
 package DaLaw2.FinalProject.Manager;
 
-import DaLaw2.FinalProject.Main;
 import DaLaw2.FinalProject.Manager.DataClass.Config;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -10,11 +9,12 @@ import java.util.Optional;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 public class ConfigManager {
-    private static volatile ConfigManager instance;
-    private static final Logger logger = LogManager.getLogger(ConfigManager.class);
+    private static final ConfigManager instance = new ConfigManager();
     private static final ReentrantReadWriteLock rwLock = new ReentrantReadWriteLock();
 
-    private final Config config;
+    private static final Logger logger = LogManager.getLogger(ConfigManager.class);
+
+    private Config config;
 
     private ConfigManager() {
         Optional<Config> parseFromFile = tryParseFromFile();
@@ -22,16 +22,6 @@ public class ConfigManager {
     }
 
     public static ConfigManager getInstance() {
-        if (instance == null) {
-            rwLock.writeLock().lock();
-            try {
-                if (instance == null) {
-                    instance = new ConfigManager();
-                }
-            } finally {
-                rwLock.writeLock().unlock();
-            }
-        }
         return instance;
     }
 
@@ -49,6 +39,13 @@ public class ConfigManager {
         if (!Config.validateConfig(config)) {
             throw new IllegalArgumentException("Invalid config");
         }
+        ConfigManager instance = ConfigManager.getInstance();
+        rwLock.writeLock().lock();
+        try {
+            instance.config = config;
+        } finally {
+            rwLock.writeLock().unlock();
+        }
         dumpToFile(config);
     }
 
@@ -59,7 +56,7 @@ public class ConfigManager {
             ObjectInputStream in = new ObjectInputStream(fileIn);
             return Optional.of((Config) in.readObject());
         } catch (IOException | ClassNotFoundException | ClassCastException _) {
-            logger.info("No config found");
+            logger.info("No exist config file found.");
             return Optional.empty();
         }
     }
