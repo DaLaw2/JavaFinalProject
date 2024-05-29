@@ -2,7 +2,7 @@ package DaLaw2.FinalProject.Manager;
 
 import org.apache.logging.log4j.Logger;
 import org.apache.logging.log4j.LogManager;
-import DaLaw2.FinalProject.Connection.Connection;
+import DaLaw2.FinalProject.Connection.Receiver;
 import DaLaw2.FinalProject.Manager.DataClass.Config;
 
 import java.util.UUID;
@@ -18,7 +18,7 @@ public class ConnectionManager extends Thread {
     private static final ReentrantReadWriteLock rwLock = new ReentrantReadWriteLock();
 
     private ServerSocket serverSocket;
-    private final HashMap<UUID, Connection> connections = new HashMap<>();
+    private final HashMap<UUID, Receiver> connections = new HashMap<>();
 
     private ConnectionManager() {
         Config config;
@@ -76,9 +76,10 @@ public class ConnectionManager extends Thread {
         try {
             serverSocket.setSoTimeout(config.internalTimestamp);
             Socket socket = serverSocket.accept();
-            UUID uuid = UUID.randomUUID();
-            Connection connection = new Connection(uuid, socket);
-            connections.put(uuid, connection);
+            Receiver receiver = new Receiver(socket);
+            UUID uuid = receiver.getId();
+            receiver.start();
+            connections.put(uuid, receiver);
             logger.info("Accepted new connection: {}", uuid);
         } catch (IOException e) {
             if (!Thread.currentThread().isInterrupted()) {

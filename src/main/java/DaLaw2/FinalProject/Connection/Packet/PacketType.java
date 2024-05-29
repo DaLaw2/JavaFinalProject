@@ -3,9 +3,9 @@ package DaLaw2.FinalProject.Connection.Packet;
 import org.apache.logging.log4j.Logger;
 import org.apache.logging.log4j.LogManager;
 
-import java.nio.BufferOverflowException;
-import java.nio.ByteBuffer;
 import java.util.HashMap;
+import java.nio.ByteBuffer;
+import java.nio.BufferOverflowException;
 
 public enum PacketType {
     BasePacket(0),

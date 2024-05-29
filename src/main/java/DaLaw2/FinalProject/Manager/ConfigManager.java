@@ -11,7 +11,7 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 public class ConfigManager {
     private static volatile ConfigManager instance;
-    private static final Logger logger = LogManager.getLogger(Main.class);
+    private static final Logger logger = LogManager.getLogger(ConfigManager.class);
     private static final ReentrantReadWriteLock rwLock = new ReentrantReadWriteLock();
 
     private final Config config;
