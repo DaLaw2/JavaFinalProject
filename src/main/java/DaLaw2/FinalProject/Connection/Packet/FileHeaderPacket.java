@@ -5,5 +5,7 @@ public class FileHeaderPacket extends BasePacket {
 
     public FileHeaderPacket(byte[] data) {
         super();
+        this.id = packetType.toByte();
+        this.data = data;
     }
 }

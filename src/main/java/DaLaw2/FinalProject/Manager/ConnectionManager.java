@@ -3,7 +3,8 @@ package DaLaw2.FinalProject.Manager;
 import DaLaw2.FinalProject.Connection.IncomingConnection;
 import DaLaw2.FinalProject.Connection.OutgoingConnection;
 import DaLaw2.FinalProject.Connection.Utils.SocketStream;
-import DaLaw2.FinalProject.Manager.DataClass.Config;
+import DaLaw2.FinalProject.Utils.Config;
+import DaLaw2.FinalProject.Utils.Task;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -31,8 +32,8 @@ public class ConnectionManager extends Thread {
             try {
                 this.serverSocket = new ServerSocket(config.acceptPort);
                 break;
-            } catch (IOException _) {
-                logger.error("Failed to bind to port {}.", config.acceptPort);
+            } catch (IOException e) {
+                logger.error("Failed to bind to port {}.", config.acceptPort, e);
                 try {
                     Thread.sleep(config.retryDuration * 1000L);
                 } catch (InterruptedException _) {
@@ -59,8 +60,8 @@ public class ConnectionManager extends Thread {
         interrupt();
         try {
             serverSocket.close();
-        } catch (IOException _) {
-            logger.error("Failed to close server socket.");
+        } catch (IOException e) {
+            logger.error("Failed to close server socket.", e);
         }
     }
 
@@ -73,28 +74,13 @@ public class ConnectionManager extends Thread {
             SocketStream socketStream = new SocketStream(socket);
             IncomingConnection incomingConnection = new IncomingConnection(socketStream);
             UUID uuid = incomingConnection.getUUID();
-            incomingConnection.start();
+            Task task = Task.createReceiveTask(config.savePath.resolve(uuid.toString()));
+            TaskManager.getInstance().addTask(task);
             this.incomingConnections.put(uuid, incomingConnection);
+            incomingConnection.start();
             logger.info("Accepted new connection: {}", uuid);
-        } catch (IOException _) {
-            logger.error("Failed to accept connection");
-        } finally {
-            rwLock.readLock().unlock();
-        }
-    }
-
-    public void connectTo(String host, int port) {
-        rwLock.readLock().lock();
-        try {
-            Socket socket = new Socket(host, port);
-            UUID uuid = UUID.randomUUID();
-            SocketStream socketStream = new SocketStream(socket);
-            OutgoingConnection outgoingConnection = new OutgoingConnection(uuid, socketStream);
-            outgoingConnection.start();
-            this.outgoingConnections.put(uuid, outgoingConnection);
-            logger.info("Connected to {}:{}.", host, port);
-        } catch (IOException _) {
-            logger.error("Failed to connect to {}:{}.", host, port);
+        } catch (Exception e) {
+            logger.error("Failed to accept connection.", e);
         } finally {
             rwLock.readLock().unlock();
         }

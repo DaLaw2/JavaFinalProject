@@ -10,7 +10,7 @@ public class OutgoingConnection extends Thread {
 
     public OutgoingConnection(SocketStream socket) {
         this.socket = socket;
-
+        this.uuid = UUID.randomUUID();
     }
 
     public UUID getUUID() {

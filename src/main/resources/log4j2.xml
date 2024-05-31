@@ -9,7 +9,7 @@
         <Root level="all">
             <AppenderRef ref="Console"/>
         </Root>
-        <Logger name="DaLaw2.FinalProject.Main" level="debug" additivity="false">
+        <Logger name="DaLaw2.FinalProject.Scroll" level="debug" additivity="false">
             <AppenderRef ref="Console"/>
         </Logger>
     </Loggers>

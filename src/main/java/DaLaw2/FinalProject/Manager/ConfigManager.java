@@ -1,6 +1,6 @@
 package DaLaw2.FinalProject.Manager;
 
-import DaLaw2.FinalProject.Manager.DataClass.Config;
+import DaLaw2.FinalProject.Utils.Config;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -46,7 +46,6 @@ public class ConfigManager {
         } finally {
             rwLock.writeLock().unlock();
         }
-        dumpToFile(config);
     }
 
     private static Optional<Config> tryParseFromFile() {

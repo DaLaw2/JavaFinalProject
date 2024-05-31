@@ -1,6 +1,6 @@
 package DaLaw2.FinalProject.Manager;
 
-import DaLaw2.FinalProject.Manager.DataClass.Task;
+import DaLaw2.FinalProject.Utils.Task;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -16,15 +16,27 @@ public class TaskManager {
 
     private static final Logger logger = LogManager.getLogger(TaskManager.class);
 
-    private final HashMap<UUID, Task> tasks;
+    private final HashMap<UUID, Task> tasks = new HashMap<>();
 
     private TaskManager() {
         Optional<HashMap<UUID, Task>> parseFromFile = tryParseFromFile();
-        tasks = parseFromFile.orElseGet(HashMap::new);
+        HashMap<UUID, Task> existingTasks = parseFromFile.orElseGet(HashMap::new);
+        for (Task task : existingTasks.values())
+            addTask(task);
     }
 
     public static TaskManager getInstance() {
         return instance;
+    }
+
+    public void addTask(Task task) {
+        rwLock.writeLock().lock();
+        tasks.put(task.uuid, task);
+        rwLock.writeLock().unlock();
+    }
+
+    public void processTask(Task task) {
+
     }
 
     private Optional<HashMap<UUID, Task>> tryParseFromFile() {
