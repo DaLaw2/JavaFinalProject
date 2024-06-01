@@ -3,8 +3,8 @@ package DaLaw2.FinalProject.Manager;
 import DaLaw2.FinalProject.Connection.IncomingConnection;
 import DaLaw2.FinalProject.Connection.OutgoingConnection;
 import DaLaw2.FinalProject.Connection.Utils.SocketStream;
-import DaLaw2.FinalProject.Utils.Config;
-import DaLaw2.FinalProject.Utils.Task;
+import DaLaw2.FinalProject.Manager.DataClass.Config;
+import DaLaw2.FinalProject.Manager.DataClass.Task;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 

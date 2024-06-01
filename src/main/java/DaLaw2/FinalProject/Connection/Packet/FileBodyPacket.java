@@ -7,8 +7,9 @@ public class FileBodyPacket extends BasePacket {
 
     public FileBodyPacket(byte[] data) {
         super();
+        this.id = packetType.toByte();
         long length = 12 + data.length;
         this.length = ByteBuffer.allocate(8).putLong(length).array();
-        this.id = packetType.toByte();
+        this.data = data;
     }
 }

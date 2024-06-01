@@ -1,4 +1,4 @@
-package DaLaw2.FinalProject.Utils;
+package DaLaw2.FinalProject.Manager.DataClass;
 
 import java.io.IOException;
 import java.io.Serializable;

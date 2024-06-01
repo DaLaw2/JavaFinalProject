@@ -1,12 +1,14 @@
 package DaLaw2.FinalProject.Connection.Utils;
 
 import DaLaw2.FinalProject.Connection.Packet.BasePacket;
+import DaLaw2.FinalProject.Manager.ConfigManager;
+import DaLaw2.FinalProject.Manager.DataClass.Config;
 
-import java.net.Socket;
-import java.nio.ByteBuffer;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.net.Socket;
+import java.nio.ByteBuffer;
 
 public class SocketStream {
     private final Socket socket;
@@ -24,7 +26,10 @@ public class SocketStream {
     }
 
     public BasePacket receivePacket() throws IOException {
+        Config config = ConfigManager.getConfig();
+        socket.setSoTimeout(config.timeoutDuration);
         InputStream stream = socket.getInputStream();
+
         byte[] lengthBytes = new byte[8];
         if (stream.read(lengthBytes) != 8)
             throw new IOException("Failed to read data from socket.");

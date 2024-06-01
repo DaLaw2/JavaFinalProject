@@ -12,9 +12,8 @@ public enum PacketType {
     FileBodyPacket(1),
     FileEndPacket(2),
     FileHeaderPacket(3),
-    FileRequireResendPacket(4),
-    FileTransferAcknowledgePacket(5),
-    HeartPacket(6);
+    FileRequireSendPacket(4),
+    FileTransferAcknowledgePacket(5);
 
     private final int id;
     private static final Logger logger = LogManager.getLogger(PacketType.class);

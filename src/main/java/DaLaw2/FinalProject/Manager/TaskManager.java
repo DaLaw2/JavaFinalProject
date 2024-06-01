@@ -1,6 +1,6 @@
 package DaLaw2.FinalProject.Manager;
 
-import DaLaw2.FinalProject.Utils.Task;
+import DaLaw2.FinalProject.Manager.DataClass.Task;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
