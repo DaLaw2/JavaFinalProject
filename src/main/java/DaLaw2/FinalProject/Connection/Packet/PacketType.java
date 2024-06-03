@@ -1,6 +1,5 @@
 package DaLaw2.FinalProject.Connection.Packet;
 
-import DaLaw2.FinalProject.Utils.AppLogger;
 import org.apache.logging.log4j.Logger;
 import org.apache.logging.log4j.LogManager;
 
@@ -14,8 +13,6 @@ public enum PacketType {
     FileBodyPacket(1),
     FileRequireSendPacket(4),
     EndTransferPacket(2);
-
-    private static final Logger logger = LogManager.getLogger(AppLogger.class);
 
     private final int id;
     private static final HashMap<Integer, PacketType> idToPacketTypeMap = new HashMap<>();
@@ -38,10 +35,8 @@ public enum PacketType {
         try {
             int id = ByteBuffer.wrap(bytes).getInt();
             PacketType packetType = idToPacketTypeMap.get(id);
-            if (packetType == null) {
-                logger.error("No PacketType found.");
+            if (packetType == null)
                 throw new ClassCastException("Invalid PacketType ID.");
-            }
             return packetType;
         } catch (BufferOverflowException _) {
             throw new ClassCastException("Invalid byte array length.");

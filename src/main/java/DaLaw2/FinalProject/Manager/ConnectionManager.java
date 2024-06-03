@@ -4,8 +4,6 @@ import DaLaw2.FinalProject.Connection.IncomingConnection;
 import DaLaw2.FinalProject.Connection.OutgoingConnection;
 import DaLaw2.FinalProject.Connection.Utils.SocketStream;
 import DaLaw2.FinalProject.Manager.DataClass.Config;
-import DaLaw2.FinalProject.Manager.DataClass.Task;
-import DaLaw2.FinalProject.Utils.AppLogger;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -19,7 +17,7 @@ import java.util.UUID;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 public class ConnectionManager extends Thread {
-    private static final Logger logger = LogManager.getLogger(AppLogger.class);
+    private static final Logger logger = LogManager.getLogger(ConnectionManager.class);
 
     private static final ConnectionManager instance = new ConnectionManager();
     private static final ReentrantReadWriteLock rwLock = new ReentrantReadWriteLock();
@@ -74,6 +72,8 @@ public class ConnectionManager extends Thread {
         try {
             serverSocket.setSoTimeout(config.internalTimestamp);
             Socket socket = serverSocket.accept();
+            String host = socket.getInetAddress().getHostAddress();
+            int port = socket.getPort();
             SocketStream socketStream = new SocketStream(socket);
             IncomingConnection incomingConnection = new IncomingConnection(socketStream);
             UUID uuid = incomingConnection.getUUID();

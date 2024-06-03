@@ -2,9 +2,6 @@ package DaLaw2.FinalProject.Manager;
 
 import DaLaw2.FinalProject.Manager.DataClass.Config;
 import DaLaw2.FinalProject.Manager.DataClass.Task;
-import DaLaw2.FinalProject.Utils.AppLogger;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 
 import java.io.*;
 import java.nio.file.Path;
@@ -28,6 +25,20 @@ public class TaskManager {
 
     public static TaskManager getInstance() {
         return instance;
+    }
+
+    public Task getTask(UUID uuid) {
+        rwLock.readLock().lock();
+        Task result = tasks.get(uuid);
+        rwLock.readLock().unlock();
+        return result;
+    }
+
+    public HashMap<UUID, Task> getTasks() {
+        rwLock.readLock().lock();
+        HashMap<UUID, Task> result = new HashMap<>(tasks);
+        rwLock.readLock().unlock();
+        return result;
     }
 
     public void addTask(Task task) {
