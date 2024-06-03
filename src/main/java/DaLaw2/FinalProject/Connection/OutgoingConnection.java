@@ -4,12 +4,11 @@ import DaLaw2.FinalProject.Connection.Packet.*;
 import DaLaw2.FinalProject.Connection.Utils.SocketStream;
 import DaLaw2.FinalProject.Manager.DataClass.FileBody;
 import DaLaw2.FinalProject.Manager.DataClass.FileHeader;
+import DaLaw2.FinalProject.Utils.AppLogger;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.io.ObjectOutputStream;
 import java.net.SocketTimeoutException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -17,7 +16,7 @@ import java.util.ArrayList;
 import java.util.UUID;
 
 public class OutgoingConnection extends Thread {
-    private static final Logger logger = LogManager.getLogger(IncomingConnection.class);
+    private static final Logger logger = LogManager.getLogger(AppLogger.class);
 
     private final UUID uuid;
     private final SocketStream socket;
@@ -48,13 +47,14 @@ public class OutgoingConnection extends Thread {
                     for (Long blockId : requireSend) {
                         byte[] data = fileData.get(blockId.intValue());
                         FileBody fileBody = new FileBody(blockId, data);
-                        FileBodyPacket fileBodyPacket = new FileBodyPacket(uuid, blockId, data);
+                        FileBodyPacket fileBodyPacket = new FileBodyPacket(fileBody);
                         socket.sendPacket(fileBodyPacket);
                     }
+                    sendEndTransfer();
                 } else if (packetType == PacketType.EndTransferPacket) {
                     break;
                 } else {
-                    logger.error("Unexpected packet type: " + packetType);
+                    logger.error("Unexpected packet type: {}", packetType);
                     return;
                 }
             }
@@ -82,12 +82,13 @@ public class OutgoingConnection extends Thread {
 
     private void sendFileHeader() throws IOException {
         FileHeader fileHeader = new FileHeader(uuid, fileName, fileSize);
-        ByteArrayOutputStream stream = new ByteArrayOutputStream();
-        ObjectOutputStream out = new ObjectOutputStream(stream);
-        out.writeObject(fileHeader);
-        byte[] data = stream.toByteArray();
-        FileHeaderPacket fileHeaderPacket = new FileHeaderPacket(data);
+        FileHeaderPacket fileHeaderPacket = new FileHeaderPacket(fileHeader);
         socket.sendPacket(fileHeaderPacket);
+    }
+
+    private void sendEndTransfer() throws IOException {
+        EndTransferPacket endTransferPacket = new EndTransferPacket();
+        socket.sendPacket(endTransferPacket);
     }
 
     public UUID getUUID() {

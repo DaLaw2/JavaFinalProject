@@ -7,7 +7,8 @@ public class EndTransferPacket extends BasePacket {
 
     public EndTransferPacket() {
         super();
-        this.length = ByteBuffer.allocate(8).putLong(12).array();
         this.id = packetType.toByte();
+        this.length = ByteBuffer.allocate(8).putLong(12).array();
+        this.data = new byte[0];
     }
 }

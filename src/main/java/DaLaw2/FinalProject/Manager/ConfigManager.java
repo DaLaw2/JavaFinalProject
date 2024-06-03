@@ -1,6 +1,7 @@
 package DaLaw2.FinalProject.Manager;
 
 import DaLaw2.FinalProject.Manager.DataClass.Config;
+import DaLaw2.FinalProject.Utils.AppLogger;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -9,10 +10,10 @@ import java.util.Optional;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 public class ConfigManager {
+    private static final Logger logger = LogManager.getLogger(AppLogger.class);
+
     private static final ConfigManager instance = new ConfigManager();
     private static final ReentrantReadWriteLock rwLock = new ReentrantReadWriteLock();
-
-    private static final Logger logger = LogManager.getLogger(ConfigManager.class);
 
     private Config config;
 

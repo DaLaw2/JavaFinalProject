@@ -6,6 +6,7 @@ import DaLaw2.FinalProject.Manager.ConfigManager;
 import DaLaw2.FinalProject.Manager.DataClass.Config;
 import DaLaw2.FinalProject.Manager.DataClass.FileBody;
 import DaLaw2.FinalProject.Manager.DataClass.FileHeader;
+import DaLaw2.FinalProject.Utils.AppLogger;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -18,7 +19,7 @@ import java.util.HashMap;
 import java.util.UUID;
 
 public class IncomingConnection extends Thread {
-    private static final Logger logger = LogManager.getLogger(IncomingConnection.class);
+    private static final Logger logger = LogManager.getLogger(AppLogger.class);
 
     private final UUID uuid;
     private final SocketStream socket;
@@ -63,6 +64,7 @@ public class IncomingConnection extends Thread {
                 }
             }
             sendEndTransfer();
+            createFile();
         } catch (SocketTimeoutException e) {
             logger.error("Timeout while receiving file", e);
         } catch (Exception e) {
@@ -111,6 +113,15 @@ public class IncomingConnection extends Thread {
     private void sendEndTransfer() throws IOException {
         EndTransferPacket endTransferPacket = new EndTransferPacket();
         socket.sendPacket(endTransferPacket);
+    }
+
+    private void createFile() throws IOException {
+        Config config = ConfigManager.getConfig();
+        Path savePath = config.savePath.resolve(fileName);
+        try (FileOutputStream fos = new FileOutputStream(savePath.toFile())) {
+            for (long i = 0; i < totalBlocks; i++)
+                fos.write(receivedBlocks.get(i));
+        }
     }
 
     public UUID getUUID() {

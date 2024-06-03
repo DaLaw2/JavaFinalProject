@@ -1,5 +1,6 @@
 package DaLaw2.FinalProject.Connection.Packet;
 
+import DaLaw2.FinalProject.Utils.AppLogger;
 import org.apache.logging.log4j.Logger;
 import org.apache.logging.log4j.LogManager;
 
@@ -14,8 +15,9 @@ public enum PacketType {
     FileRequireSendPacket(4),
     EndTransferPacket(2);
 
+    private static final Logger logger = LogManager.getLogger(AppLogger.class);
+
     private final int id;
-    private static final Logger logger = LogManager.getLogger(PacketType.class);
     private static final HashMap<Integer, PacketType> idToPacketTypeMap = new HashMap<>();
 
     static {

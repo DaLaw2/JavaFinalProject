@@ -19,6 +19,15 @@ public class FileBodyPacket extends BasePacket {
         this.data = data;
     }
 
+    public FileBodyPacket(FileBody fileBody) throws IOException {
+        super();
+        this.id = packetType.toByte();
+        byte[] data = fileBody.toByteArray();
+        long length = 12 + data.length;
+        this.length = ByteBuffer.allocate(8).putLong(length).array();
+        this.data = data;
+    }
+
     public static FileBodyPacket fromBasePacket(BasePacket basePacket) {
         return new FileBodyPacket(basePacket.data);
     }

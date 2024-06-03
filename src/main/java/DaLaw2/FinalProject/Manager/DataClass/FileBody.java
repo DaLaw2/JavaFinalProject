@@ -1,5 +1,8 @@
 package DaLaw2.FinalProject.Manager.DataClass;
 
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.ObjectOutputStream;
 import java.io.Serializable;
 
 public class FileBody implements Serializable {
@@ -12,4 +15,10 @@ public class FileBody implements Serializable {
     }
 
 
+    public byte[] toByteArray() throws IOException {
+        ByteArrayOutputStream stream = new ByteArrayOutputStream();
+        ObjectOutputStream out = new ObjectOutputStream(stream);
+        out.writeObject(this);
+        return stream.toByteArray();
+    }
 }

@@ -19,25 +19,25 @@ public class SocketStream {
 
     public void sendPacket(BasePacket packet) throws IOException {
         OutputStream stream = socket.getOutputStream();
-        stream.write(packet.length);
         stream.write(packet.id);
+        stream.write(packet.length);
         stream.write(packet.data);
         stream.flush();
     }
 
     public BasePacket receivePacket() throws IOException {
         Config config = ConfigManager.getConfig();
-        socket.setSoTimeout(config.timeoutDuration);
+        socket.setSoTimeout(config.timeoutDuration * 1000);
         InputStream stream = socket.getInputStream();
+
+        byte[] idBytes = new byte[4];
+        if (stream.read(idBytes) != 4)
+            throw new IOException("Failed to read data from socket.");
 
         byte[] lengthBytes = new byte[8];
         if (stream.read(lengthBytes) != 8)
             throw new IOException("Failed to read data from socket.");
         long length = ByteBuffer.wrap(lengthBytes).getLong();
-
-        byte[] idBytes = new byte[4];
-        if (stream.read(idBytes) != 4)
-            throw new IOException("Failed to read data from socket.");
 
         int dataLength = (int) (length - 12);
         byte[] dataBytes = new byte[dataLength];
@@ -50,7 +50,7 @@ public class SocketStream {
             totalRead += bytesRead;
         }
 
-        return new BasePacket(lengthBytes, idBytes, dataBytes);
+        return new BasePacket(idBytes, lengthBytes, dataBytes);
     }
 
     public void close() throws IOException {

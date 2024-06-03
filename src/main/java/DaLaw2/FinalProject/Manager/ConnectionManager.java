@@ -5,22 +5,24 @@ import DaLaw2.FinalProject.Connection.OutgoingConnection;
 import DaLaw2.FinalProject.Connection.Utils.SocketStream;
 import DaLaw2.FinalProject.Manager.DataClass.Config;
 import DaLaw2.FinalProject.Manager.DataClass.Task;
+import DaLaw2.FinalProject.Utils.AppLogger;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.net.SocketTimeoutException;
 import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.UUID;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 public class ConnectionManager extends Thread {
+    private static final Logger logger = LogManager.getLogger(AppLogger.class);
+
     private static final ConnectionManager instance = new ConnectionManager();
     private static final ReentrantReadWriteLock rwLock = new ReentrantReadWriteLock();
-
-    private static final Logger logger = LogManager.getLogger(ConnectionManager.class);
 
     private ServerSocket serverSocket;
     private final HashMap<UUID, IncomingConnection> incomingConnections = new HashMap<>();
@@ -79,6 +81,8 @@ public class ConnectionManager extends Thread {
             this.incomingConnections.put(uuid, incomingConnection);
             incomingConnection.start();
             logger.info("Accepted new connection: {}", uuid);
+        } catch (SocketTimeoutException e) {
+            // Do nothing
         } catch (Exception e) {
             logger.error("Failed to accept connection.", e);
         } finally {

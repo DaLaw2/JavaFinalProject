@@ -19,6 +19,15 @@ public class FileHeaderPacket extends BasePacket {
         this.data = data;
     }
 
+    public FileHeaderPacket(FileHeader fileHeader) throws IOException {
+        super();
+        this.id = packetType.toByte();
+        byte[] data = fileHeader.toByteArray();
+        long length = 12 + data.length;
+        this.length = ByteBuffer.allocate(8).putLong(length).array();
+        this.data = data;
+    }
+
     public static FileHeaderPacket fromBasePacket(BasePacket basePacket) {
         return new FileHeaderPacket(basePacket.data);
     }
