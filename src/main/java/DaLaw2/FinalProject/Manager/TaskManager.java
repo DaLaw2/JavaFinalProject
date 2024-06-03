@@ -1,10 +1,12 @@
 package DaLaw2.FinalProject.Manager;
 
+import DaLaw2.FinalProject.Manager.DataClass.Config;
 import DaLaw2.FinalProject.Manager.DataClass.Task;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.io.*;
+import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.Optional;
 import java.util.UUID;
@@ -35,10 +37,6 @@ public class TaskManager {
         rwLock.writeLock().unlock();
     }
 
-    public void processTask(Task task) {
-
-    }
-
     private Optional<HashMap<UUID, Task>> tryParseFromFile() {
         try {
             String fileName = ".tasks";
@@ -57,5 +55,19 @@ public class TaskManager {
         FileOutputStream fileOut = new FileOutputStream(fileName);
         ObjectOutputStream out = new ObjectOutputStream(fileOut);
         out.writeObject(tasks);
+    }
+
+    public void createSendTask(String host, int port, Path sourcePath) {
+        UUID uuid = UUID.randomUUID();
+        Task sendTask = Task.createSendTask(uuid, sourcePath);
+        addTask(sendTask);
+        ConnectionManager.getInstance().startConnection(uuid, host, port, sourcePath);
+    }
+
+    public void createReceiveTask(UUID uuid) {
+        Config config = ConfigManager.getConfig();
+        Path savePath = config.savePath.resolve(uuid.toString());
+        Task receiveTask = Task.createReceiveTask(uuid, savePath);
+        addTask(receiveTask);
     }
 }

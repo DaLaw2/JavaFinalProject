@@ -12,7 +12,11 @@ public class Convertor {
     }
 
     public static ArrayList<Long> arrayListFromByteArray(byte[] bytes) {
-        return null;
+        ArrayList<Long> list = new ArrayList<>();
+        ByteBuffer buffer = ByteBuffer.wrap(bytes);
+        while (buffer.hasRemaining())
+            list.add(buffer.getLong());
+        return list;
     }
 
     public static long bytesToLong(byte[] data) {

@@ -11,6 +11,7 @@ import org.apache.logging.log4j.Logger;
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.UUID;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
@@ -74,13 +75,28 @@ public class ConnectionManager extends Thread {
             SocketStream socketStream = new SocketStream(socket);
             IncomingConnection incomingConnection = new IncomingConnection(socketStream);
             UUID uuid = incomingConnection.getUUID();
-            Task task = Task.createReceiveTask(config.savePath.resolve(uuid.toString()));
-            TaskManager.getInstance().addTask(task);
+            TaskManager.getInstance().createReceiveTask(uuid);
             this.incomingConnections.put(uuid, incomingConnection);
             incomingConnection.start();
             logger.info("Accepted new connection: {}", uuid);
         } catch (Exception e) {
             logger.error("Failed to accept connection.", e);
+        } finally {
+            rwLock.readLock().unlock();
+        }
+    }
+
+    public void startConnection(UUID uuid, String host, int port, Path sourcePath) {
+        rwLock.readLock().lock();
+        try {
+            Socket socket = new Socket(host, port);
+            SocketStream socketStream = new SocketStream(socket);
+            OutgoingConnection outgoingConnection = new OutgoingConnection(uuid, socketStream, sourcePath);
+            this.outgoingConnections.put(uuid, outgoingConnection);
+            outgoingConnection.start();
+            logger.info("Started new connection: {}", uuid);
+        } catch (Exception e) {
+            logger.error("Failed to start connection.", e);
         } finally {
             rwLock.readLock().unlock();
         }

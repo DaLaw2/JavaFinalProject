@@ -1,9 +1,6 @@
 package DaLaw2.FinalProject.Connection;
 
-import DaLaw2.FinalProject.Connection.Packet.BasePacket;
-import DaLaw2.FinalProject.Connection.Packet.FileRequireSendPacket;
-import DaLaw2.FinalProject.Connection.Packet.FileTransferAcknowledgePacket;
-import DaLaw2.FinalProject.Connection.Packet.PacketType;
+import DaLaw2.FinalProject.Connection.Packet.*;
 import DaLaw2.FinalProject.Connection.Utils.SocketStream;
 import DaLaw2.FinalProject.Manager.ConfigManager;
 import DaLaw2.FinalProject.Manager.DataClass.Config;
@@ -32,9 +29,8 @@ public class IncomingConnection extends Thread {
 
     public IncomingConnection(SocketStream socket) throws IOException, ClassNotFoundException {
         BasePacket packet = socket.receivePacket();
-        ByteArrayInputStream stream = new ByteArrayInputStream(packet.data);
-        ObjectInput in = new ObjectInputStream(stream);
-        FileHeader fileHeader = (FileHeader) in.readObject();
+        FileHeaderPacket fileHeaderPacket = FileHeaderPacket.fromBasePacket(packet);
+        FileHeader fileHeader = fileHeaderPacket.unwarp();
         this.socket = socket;
         this.uuid = fileHeader.uuid;
         this.fileName = fileHeader.fileName;
@@ -46,33 +42,30 @@ public class IncomingConnection extends Thread {
     @Override
     public void run() {
         Config config = ConfigManager.getConfig();
-        while (receivedBlocks.size() < totalBlocks) {
-            try {
-                sendRequest();
-                BasePacket packet = socket.receivePacket();
-                ByteArrayInputStream stream = new ByteArrayInputStream(packet.data);
-                ObjectInput in = new ObjectInputStream(stream);
-                FileBody fileBody = (FileBody) in.readObject();
-                receivedBlocks.put(fileBody.id, fileBody.data);
-                Files.write(config.savePath.resolve(uuid.toString()).resolve(String.valueOf(fileBody.id)), fileBody.data);
-            } catch (SocketTimeoutException e) {
-                logger.error("Timeout while receiving file", e);
-                return;
-            } catch (Exception e) {
-                logger.error("Error while receiving file", e);
-                return;
-            }
-        }
         try {
-            BasePacket packet = socket.receivePacket();
-            if (PacketType.fromByte(packet.id) != PacketType.FileEndPacket) {
-                logger.error("Invalid packet type received.");
-                return;
+            while (receivedBlocks.size() < totalBlocks) {
+                sendRequest();
+                while (true) {
+                    BasePacket packet = socket.receivePacket();
+                    PacketType packetType = PacketType.fromByte(packet.id);
+                    if (packetType == PacketType.FileBodyPacket) {
+                        FileBodyPacket fileBodyPacket = FileBodyPacket.fromBasePacket(packet);
+                        FileBody fileBody = fileBodyPacket.unwarp();
+                        receivedBlocks.put(fileBody.id, fileBody.data);
+                        Path savePath = config.savePath.resolve(uuid.toString()).resolve(String.valueOf(fileBody.id));
+                        Files.write(savePath, fileBody.data);
+                    } else if (packetType == PacketType.EndTransferPacket) {
+                        break;
+                    } else {
+                        logger.error("Unexpected packet type: {}", packetType);
+                        return;
+                    }
+                }
             }
-            socket.sendPacket(new FileTransferAcknowledgePacket());
+            sendEndTransfer();
         } catch (SocketTimeoutException e) {
             logger.error("Timeout while receiving file", e);
-        } catch (IOException e) {
+        } catch (Exception e) {
             logger.error("Error while receiving file", e);
         }
     }
@@ -83,9 +76,12 @@ public class IncomingConnection extends Thread {
 
         if (!Files.exists(path))
             Files.createDirectories(path);
+        else if (!Files.isDirectory(path))
+            throw new IOException("Save path is not a directory.");
 
         File[] files = new File(path.toString()).listFiles();
         HashMap<Long, byte[]> receivedBlocks = new HashMap<>();
+        assert files != null;
         for (File file : files) {
             try {
                 long blockNumber = Long.parseLong(file.getName());
@@ -112,7 +108,28 @@ public class IncomingConnection extends Thread {
         socket.sendPacket(fileRequireSendPacket);
     }
 
+    private void sendEndTransfer() throws IOException {
+        EndTransferPacket endTransferPacket = new EndTransferPacket();
+        socket.sendPacket(endTransferPacket);
+    }
+
     public UUID getUUID() {
         return uuid;
+    }
+
+    public String getFileName() {
+        return fileName;
+    }
+
+    public long getFileSize() {
+        return fileSize;
+    }
+
+    public long getTotalBlocks() {
+        return totalBlocks;
+    }
+
+    public long getReceivedCount() {
+        return receivedBlocks.size();
     }
 }

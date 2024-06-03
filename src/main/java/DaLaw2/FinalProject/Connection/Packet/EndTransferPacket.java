@@ -2,10 +2,10 @@ package DaLaw2.FinalProject.Connection.Packet;
 
 import java.nio.ByteBuffer;
 
-public class FileTransferAcknowledgePacket extends BasePacket {
-    public final PacketType packetType = PacketType.FileTransferAcknowledgePacket;
+public class EndTransferPacket extends BasePacket {
+    public final PacketType packetType = PacketType.EndTransferPacket;
 
-    public FileTransferAcknowledgePacket() {
+    public EndTransferPacket() {
         super();
         this.length = ByteBuffer.allocate(8).putLong(12).array();
         this.id = packetType.toByte();

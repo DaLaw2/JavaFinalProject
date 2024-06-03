@@ -18,8 +18,4 @@ public class FileHeader implements Serializable {
         this.fileSize = fileSize;
         this.packetCount = (long) Math.ceil((double) fileSize / 1048576);
     }
-
-    public static FileHeader fromPath(UUID uuid, Path path) throws IOException {
-        return new FileHeader(uuid, path.getFileName().toString(), Files.size(path));
-    }
 }

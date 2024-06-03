@@ -17,8 +17,8 @@ public class Task implements Serializable {
     public final Path savePath;
     public Set<Long> receivedBlocks;
 
-    private Task(TaskType type, Path path) {
-        this.uuid = UUID.randomUUID();
+    private Task(UUID uuid, TaskType type, Path path) {
+        this.uuid = uuid;
         this.receivedBlocks = Set.of();
         this.type = type;
         if (type == TaskType.Send) {
@@ -30,19 +30,11 @@ public class Task implements Serializable {
         }
     }
 
-    public static Task createSendTask(Path sourcePath) {
-        return new Task(TaskType.Send, sourcePath);
+    public static Task createSendTask(UUID uuid, Path sourcePath) {
+        return new Task(uuid ,TaskType.Send, sourcePath);
     }
 
-    public static Task createReceiveTask(Path savePath) {
-        return new Task(TaskType.Receive, savePath);
-    }
-
-    public void markBlockReceived(long blockNumber) {
-        receivedBlocks.add(blockNumber);
-    }
-
-    public boolean isBlockReceived(long blockNumber) {
-        return receivedBlocks.contains(blockNumber);
+    public static Task createReceiveTask(UUID uuid, Path savePath) {
+        return new Task(uuid, TaskType.Receive, savePath);
     }
 }

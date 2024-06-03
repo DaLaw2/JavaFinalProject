@@ -9,11 +9,10 @@ import java.nio.BufferOverflowException;
 
 public enum PacketType {
     BasePacket(0),
-    FileBodyPacket(1),
-    FileEndPacket(2),
     FileHeaderPacket(3),
+    FileBodyPacket(1),
     FileRequireSendPacket(4),
-    FileTransferAcknowledgePacket(5);
+    EndTransferPacket(2);
 
     private final int id;
     private static final Logger logger = LogManager.getLogger(PacketType.class);
