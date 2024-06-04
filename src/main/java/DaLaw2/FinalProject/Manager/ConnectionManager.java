@@ -38,7 +38,6 @@ public class ConnectionManager extends Thread {
                 try {
                     Thread.sleep(config.retryDuration * 1000L);
                 } catch (InterruptedException _) {
-                    logger.error("Thread was interrupted during sleep.");
                 }
             }
         }
@@ -72,17 +71,21 @@ public class ConnectionManager extends Thread {
         try {
             serverSocket.setSoTimeout(config.internalTimestamp);
             Socket socket = serverSocket.accept();
-            String host = socket.getInetAddress().getHostAddress();
-            int port = socket.getPort();
             SocketStream socketStream = new SocketStream(socket);
             IncomingConnection incomingConnection = new IncomingConnection(socketStream);
             UUID uuid = incomingConnection.getUUID();
-            TaskManager.getInstance().createReceiveTask(uuid);
+            String host = socket.getInetAddress().getHostAddress();
+            int port = socket.getPort();
+            String fileName = incomingConnection.getFileName();
+            TaskManager.getInstance().createReceiveTask(uuid, host, port, fileName);
             this.incomingConnections.put(uuid, incomingConnection);
             incomingConnection.start();
             logger.info("Accepted new connection: {}", uuid);
         } catch (SocketTimeoutException e) {
-            // Do nothing
+            try {
+                Thread.sleep(config.retryDuration);
+            } catch (InterruptedException _) {
+            }
         } catch (Exception e) {
             logger.error("Failed to accept connection.", e);
         } finally {

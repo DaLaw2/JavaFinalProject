@@ -7,6 +7,7 @@ import DaLaw2.FinalProject.Manager.DataClass.Config;
 import DaLaw2.FinalProject.Manager.DataClass.FileBody;
 import DaLaw2.FinalProject.Manager.DataClass.FileHeader;
 import DaLaw2.FinalProject.Manager.TaskManager;
+import org.apache.commons.io.FileUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -27,9 +28,10 @@ public class IncomingConnection extends Thread {
     private final String fileName;
     private final long fileSize;
     private final long totalBlocks;
-    private final Path savePath;
+    private final Path tempDirectory;
 
     public IncomingConnection(SocketStream socket) throws IOException, ClassNotFoundException {
+        Config config = ConfigManager.getConfig();
         BasePacket packet = socket.receivePacket();
         FileHeaderPacket fileHeaderPacket = FileHeaderPacket.fromBasePacket(packet);
         FileHeader fileHeader = fileHeaderPacket.unwarp();
@@ -38,17 +40,12 @@ public class IncomingConnection extends Thread {
         this.fileName = fileHeader.fileName;
         this.fileSize = fileHeader.fileSize;
         this.totalBlocks = fileHeader.packetCount;
-        this.savePath = ConfigManager.getConfig().savePath.resolve(uuid.toString());
-        if (!Files.exists(savePath)) {
-            Files.createDirectories(savePath);
-        } else if (!Files.isDirectory(savePath)) {
-            throw new IOException("Save path is not a directory.");
-        }
+        this.tempDirectory = config.savePath.resolve(uuid.toString());
+        createTempDirectory();
     }
 
     @Override
     public void run() {
-        Config config = ConfigManager.getConfig();
         try {
             while (getReceivedCount() < totalBlocks) {
                 sendRequest();
@@ -58,7 +55,7 @@ public class IncomingConnection extends Thread {
                     if (packetType == PacketType.FileBodyPacket) {
                         FileBodyPacket fileBodyPacket = FileBodyPacket.fromBasePacket(packet);
                         FileBody fileBody = fileBodyPacket.unwarp();
-                        Path savePath = config.savePath.resolve(uuid.toString()).resolve(String.valueOf(fileBody.id));
+                        Path savePath = tempDirectory.resolve(String.valueOf(fileBody.id));
                         Files.write(savePath, fileBody.data);
                     } else if (packetType == PacketType.EndTransferPacket) {
                         break;
@@ -70,18 +67,35 @@ public class IncomingConnection extends Thread {
             }
             endTransfer();
             createFile();
-            clearTempFiles();
+            deleteTempDirectory();
+            markTaskComplete();
         } catch (SocketTimeoutException e) {
             logger.error("Timeout while receiving file", e);
+            markTaskFailed();
         } catch (Exception e) {
             logger.error("Error while receiving file", e);
+            markTaskFailed();
         }
+    }
+
+    private void createTempDirectory() throws IOException {
+        if (!Files.exists(tempDirectory)) {
+            Files.createDirectories(tempDirectory);
+        } else if (!Files.isDirectory(tempDirectory)) {
+            throw new IOException("Temp path is not a directory");
+        } else {
+            FileUtils.deleteDirectory(tempDirectory.toFile());
+        }
+    }
+
+    private long getReceivedCount() {
+        return Objects.requireNonNull(tempDirectory.toFile().listFiles()).length;
     }
 
     private ArrayList<Long> findMissingBlocks() {
         ArrayList<Long> missingBlocks = new ArrayList<>();
         for (long i = 0; i < totalBlocks; i++) {
-            Path blockPath = savePath.resolve(String.valueOf(i));
+            Path blockPath = tempDirectory.resolve(String.valueOf(i));
             if (!Files.exists(blockPath))
                 missingBlocks.add(i);
         }
@@ -101,29 +115,29 @@ public class IncomingConnection extends Thread {
     }
 
     private byte[] readFileBlock(long blockId) throws IOException {
-        Path blockPath = savePath.resolve(String.valueOf(blockId));
+        Path blockPath = tempDirectory.resolve(String.valueOf(blockId));
         return Files.readAllBytes(blockPath);
     }
 
     private void createFile() throws IOException {
         Config config = ConfigManager.getConfig();
-        Path savePath = config.savePath.resolve(fileName);
-        try (FileOutputStream stream = new FileOutputStream(savePath.toFile())) {
+        Path tempDirectory = config.savePath.resolve(fileName);
+        try (FileOutputStream stream = new FileOutputStream(tempDirectory.toFile())) {
             for (long i = 0; i < totalBlocks; i++)
                 stream.write(readFileBlock(i));
         }
     }
 
-    private void clearTempFiles() throws IOException {
-        for (long i = 0; i < totalBlocks; i++) {
-            Path blockPath = savePath.resolve(String.valueOf(i));
-            Files.delete(blockPath);
-        }
-        Files.delete(savePath);
+    private void deleteTempDirectory() throws IOException {
+        FileUtils.deleteDirectory(tempDirectory.toFile());
     }
 
-    private void markedFail() {
-        TaskManager.getInstance().getTasks()
+    private void markTaskComplete() {
+        TaskManager.getInstance().getTask(uuid).complete();
+    }
+
+    private void markTaskFailed() {
+        TaskManager.getInstance().getTask(uuid).fail();
     }
 
     public UUID getUUID() {
@@ -140,9 +154,5 @@ public class IncomingConnection extends Thread {
 
     public long getTotalBlocks() {
         return totalBlocks;
-    }
-
-    private long getReceivedCount() {
-        return Objects.requireNonNull(savePath.toFile().listFiles()).length;
     }
 }

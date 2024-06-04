@@ -4,6 +4,7 @@ import DaLaw2.FinalProject.Connection.Packet.*;
 import DaLaw2.FinalProject.Connection.Utils.SocketStream;
 import DaLaw2.FinalProject.Manager.DataClass.FileBody;
 import DaLaw2.FinalProject.Manager.DataClass.FileHeader;
+import DaLaw2.FinalProject.Manager.TaskManager;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -56,10 +57,13 @@ public class OutgoingConnection extends Thread {
                 }
             }
             closeConnection();
+            markTaskComplete();
         } catch (SocketTimeoutException e) {
             logger.error("Timeout while send file", e);
+            markTaskFailed();
         } catch (Exception e) {
             logger.error("Error while send file", e);
+            markTaskFailed();
         }
     }
 
@@ -88,19 +92,15 @@ public class OutgoingConnection extends Thread {
         socket.close();
     }
 
+    private void markTaskComplete() {
+        TaskManager.getInstance().getTask(uuid).complete();
+    }
+
+    private void markTaskFailed() {
+        TaskManager.getInstance().getTask(uuid).fail();
+    }
+
     public UUID getUUID() {
         return uuid;
-    }
-
-    public Path getSourcePath() {
-        return sourcePath;
-    }
-
-    public String getFileName() {
-        return fileName;
-    }
-
-    public long getFileSize() {
-        return fileSize;
     }
 }

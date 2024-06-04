@@ -149,7 +149,7 @@ public class Main {
             taskListModel.clear();
             TaskManager.getInstance().getTasks().forEach((_, task) -> {
                 String taskInfo = String.format("Host: %s, Port: %d, File: %s, Type: %s, Status: %s",
-                        task.host, task.port, task.fileName, task.taskType, task.status);
+                        task.host, task.port, task.fileName, task.type, task.status);
                 taskListModel.addElement(taskInfo);
             });
             try {

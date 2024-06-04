@@ -69,15 +69,14 @@ public class TaskManager {
 
     public void createSendTask(String host, int port, Path sourcePath) {
         UUID uuid = UUID.randomUUID();
-        Task sendTask = Task.createSendTask(uuid, sourcePath);
+        String fileName = sourcePath.getFileName().toString();
+        Task sendTask = Task.createSendTask(uuid, host, port, fileName);
         addTask(sendTask);
         ConnectionManager.getInstance().startConnection(uuid, host, port, sourcePath);
     }
 
-    public void createReceiveTask(UUID uuid) {
-        Config config = ConfigManager.getConfig();
-        Path savePath = config.savePath.resolve(uuid.toString());
-        Task receiveTask = Task.createReceiveTask(uuid, savePath);
+    public void createReceiveTask(UUID uuid, String host, int port, String fileName) {
+        Task receiveTask = Task.createReceiveTask(uuid, host, port, fileName);
         addTask(receiveTask);
     }
 }

@@ -11,30 +11,41 @@ public class Task implements Serializable {
         Receive,
     }
 
+    public enum TaskStatus {
+        Completed,
+        InProgress,
+        Failed,
+    }
+
     public final UUID uuid;
     public final TaskType type;
-    public final Path sourcePath;
-    public final Path savePath;
-    public Set<Long> receivedBlocks;
+    public TaskStatus status;
+    public final String host;
+    public final int port;
+    public final String fileName;
 
-    private Task(UUID uuid, TaskType type, Path path) {
+    private Task(UUID uuid, TaskType type, String host, int port, String fileName) {
         this.uuid = uuid;
-        this.receivedBlocks = Set.of();
         this.type = type;
-        if (type == TaskType.Send) {
-            this.sourcePath = path;
-            this.savePath = null;
-        } else {
-            this.sourcePath = null;
-            this.savePath = path;
-        }
+        this.status = TaskStatus.InProgress;
+        this.host = host;
+        this.port = port;
+        this.fileName = fileName;
     }
 
-    public static Task createSendTask(UUID uuid, Path sourcePath) {
-        return new Task(uuid ,TaskType.Send, sourcePath);
+    public static Task createSendTask(UUID uuid, String host, int port, String fileName) {
+        return new Task(uuid ,TaskType.Send, host, port, fileName);
     }
 
-    public static Task createReceiveTask(UUID uuid, Path savePath) {
-        return new Task(uuid, TaskType.Receive, savePath);
+    public static Task createReceiveTask(UUID uuid, String host, int port, String fileName) {
+        return new Task(uuid, TaskType.Receive, host, port, fileName);
+    }
+
+    public void complete() {
+        status = TaskStatus.Completed;
+    }
+
+    public void fail() {
+        status = TaskStatus.Failed;
     }
 }
