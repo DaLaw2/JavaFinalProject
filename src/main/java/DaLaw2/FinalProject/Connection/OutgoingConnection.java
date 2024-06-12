@@ -85,9 +85,14 @@ public class OutgoingConnection extends Thread {
     private byte[] readFileBlock(long blockId) throws IOException {
         try (RandomAccessFile file = new RandomAccessFile(sourcePath.toFile(), "r")) {
             int blockSize = 1024 * 1024;
-            byte[] data = new byte[blockSize];
             file.seek(blockId * blockSize);
-            file.read(data);
+
+            long remainingBytes = fileSize - blockId * blockSize;
+            int bytesToRead = (int) Math.min(blockSize, remainingBytes);
+
+            byte[] data = new byte[bytesToRead];
+            file.readFully(data, 0, bytesToRead);
+
             return data;
         }
     }
