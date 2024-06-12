@@ -3,6 +3,7 @@ package DaLaw2.FinalProject.View;
 import DaLaw2.FinalProject.Manager.ConfigManager;
 import DaLaw2.FinalProject.Manager.ConnectionManager;
 import DaLaw2.FinalProject.Manager.DataClass.Config;
+import DaLaw2.FinalProject.Manager.DataClass.Task;
 import DaLaw2.FinalProject.Manager.TaskManager;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -16,6 +17,8 @@ import java.io.InputStream;
 import java.net.URL;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.HashMap;
+import java.util.UUID;
 
 public class MainFrame extends JFrame {
     private static final Logger logger = LogManager.getLogger(MainFrame.class);
@@ -154,6 +157,9 @@ public class MainFrame extends JFrame {
         JList<String> taskList = new JList<>(taskListModel);
         JScrollPane taskScrollPane = new JScrollPane(taskList);
 
+        Font taskFont = new Font("Time New Roman", Font.PLAIN, 18);
+        taskList.setFont(taskFont);
+
         taskPanel.add(taskScrollPane, BorderLayout.CENTER);
 
         new Thread(() -> updateTaskList(taskListModel)).start();
@@ -163,13 +169,34 @@ public class MainFrame extends JFrame {
 
     private void updateTaskList(DefaultListModel<String> taskListModel) {
         while (true) {
-            taskListModel.clear();
-            TaskManager.getInstance().getTasks().forEach((_, task) -> {
-                String taskInfo = String.format("Host: %s, Port: %d, File: %s, Type: %s, Status: %s", task.host, task.port, task.fileName, task.type, task.status);
-                taskListModel.addElement(taskInfo);
+            HashMap<UUID, Task> currentTasks = TaskManager.getInstance().getTasks();
+            SwingUtilities.invokeLater(() -> {
+                boolean listChanged = false;
+                if (taskListModel.getSize() != currentTasks.size()) {
+                    listChanged = true;
+                } else {
+                    int index = 0;
+                    for (Task task : currentTasks.values()) {
+                        String taskInfo = String.format("Host: %s, Port: %d, File: %s, Type: %s, Status: %s",
+                                task.host, task.port, task.fileName, task.type, task.status);
+                        if (!taskInfo.equals(taskListModel.get(index))) {
+                            listChanged = true;
+                            break;
+                        }
+                        index++;
+                    }
+                }
+                if (listChanged) {
+                    taskListModel.clear();
+                    for (Task task : currentTasks.values()) {
+                        String taskInfo = String.format("Host: %s, Port: %d, File: %s, Type: %s, Status: %s",
+                                task.host, task.port, task.fileName, task.type, task.status);
+                        taskListModel.addElement(taskInfo);
+                    }
+                }
             });
             try {
-                Thread.sleep(1000);
+                Thread.sleep(500);
             } catch (InterruptedException e) {
                 logger.error("Failed to update task list: {}", e.getMessage());
             }

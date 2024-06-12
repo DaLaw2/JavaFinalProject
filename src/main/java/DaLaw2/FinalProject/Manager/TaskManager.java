@@ -23,10 +23,15 @@ public class TaskManager {
     private TaskManager() {
         Optional<HashMap<UUID, Task>> parseFromFile = tryParseFromFile();
         HashMap<UUID, Task> existingTasks = parseFromFile.orElseGet(HashMap::new);
-        for (Task task : existingTasks.values())
-            if (task.status == Task.TaskStatus.InProgress || task.status == Task.TaskStatus.Failed)
-                if (task.type == Task.TaskType.Send)
+        for (Task task : existingTasks.values()) {
+            if (task.status == Task.TaskStatus.InProgress || task.status == Task.TaskStatus.Failed) {
+                if (task.type == Task.TaskType.Send) {
+                    task.status = Task.TaskStatus.InProgress;
+                    tasks.put(task.uuid, task);
                     ConnectionManager.getInstance().startConnection(task.uuid, task.host, task.port, Path.of(task.filePath));
+                }
+            }
+        }
     }
 
     public static TaskManager getInstance() {

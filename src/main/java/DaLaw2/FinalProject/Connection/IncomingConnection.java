@@ -73,7 +73,7 @@ public class IncomingConnection extends Thread {
             logger.error("Timeout while receiving file: {}", e.getMessage());
             markTaskFailed();
         } catch (Exception e) {
-            logger.error("Error while receiving file: {}", e.getMessage());
+            logger.error("Error while receiving file", e);
             markTaskFailed();
         }
     }
@@ -91,8 +91,6 @@ public class IncomingConnection extends Thread {
             Files.createDirectories(tempDirectory);
         } else if (!Files.isDirectory(tempDirectory)) {
             throw new IOException("Temp path is not a directory");
-        } else {
-            FileUtils.deleteDirectory(tempDirectory.toFile());
         }
     }
 
@@ -129,7 +127,7 @@ public class IncomingConnection extends Thread {
 
     private void createFile() throws IOException {
         Config config = ConfigManager.getConfig();
-        Path tempDirectory = Path.of(config.savePath, uuid.toString());
+        Path tempDirectory = Path.of(config.savePath, fileName);
         try (FileOutputStream stream = new FileOutputStream(tempDirectory.toFile())) {
             for (long i = 0; i < totalBlocks; i++)
                 stream.write(readFileBlock(i));

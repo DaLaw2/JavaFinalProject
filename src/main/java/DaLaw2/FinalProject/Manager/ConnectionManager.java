@@ -79,7 +79,8 @@ public class ConnectionManager extends Thread {
             UUID uuid = incomingConnection.getUUID();
             String host = socket.getInetAddress().getHostAddress();
             int port = socket.getPort();
-            Path filePath = incomingConnection.getFilePath();
+            String fileName = incomingConnection.getFileName();
+            Path filePath = Path.of(config.savePath, fileName);
             TaskManager.getInstance().createReceiveTask(uuid, host, port, filePath);
             this.incomingConnections.put(uuid, incomingConnection);
             incomingConnection.start();
