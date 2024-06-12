@@ -59,10 +59,10 @@ public class OutgoingConnection extends Thread {
             closeConnection();
             markTaskComplete();
         } catch (SocketTimeoutException e) {
-            logger.error("Timeout while send file", e);
+            logger.error("Timeout while send file: {}", e.getMessage());
             markTaskFailed();
         } catch (Exception e) {
-            logger.error("Error while send file", e);
+            logger.error("Error while send file: {}", e.getMessage());
             markTaskFailed();
         }
     }
@@ -72,7 +72,7 @@ public class OutgoingConnection extends Thread {
         try {
             socket.close();
         } catch (IOException e) {
-            logger.error("Failed to close socket.", e);
+            logger.error("Failed to close socket: {}", e.getMessage());
         }
     }
 

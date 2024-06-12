@@ -40,7 +40,7 @@ public class IncomingConnection extends Thread {
         this.fileName = fileHeader.fileName;
         this.fileSize = fileHeader.fileSize;
         this.totalBlocks = fileHeader.packetCount;
-        this.tempDirectory = config.savePath.resolve(uuid.toString());
+        this.tempDirectory = Path.of(config.savePath, uuid.toString());
         createTempDirectory();
     }
 
@@ -70,10 +70,10 @@ public class IncomingConnection extends Thread {
             deleteTempDirectory();
             markTaskComplete();
         } catch (SocketTimeoutException e) {
-            logger.error("Timeout while receiving file", e);
+            logger.error("Timeout while receiving file: {}", e.getMessage());
             markTaskFailed();
         } catch (Exception e) {
-            logger.error("Error while receiving file", e);
+            logger.error("Error while receiving file: {}", e.getMessage());
             markTaskFailed();
         }
     }
@@ -82,7 +82,7 @@ public class IncomingConnection extends Thread {
         try {
             socket.close();
         } catch (IOException e) {
-            logger.error("Failed to close socket", e);
+            logger.error("Failed to close socket: {}", e.getMessage());
         }
     }
 
@@ -129,7 +129,7 @@ public class IncomingConnection extends Thread {
 
     private void createFile() throws IOException {
         Config config = ConfigManager.getConfig();
-        Path tempDirectory = config.savePath.resolve(fileName);
+        Path tempDirectory = Path.of(config.savePath, uuid.toString());
         try (FileOutputStream stream = new FileOutputStream(tempDirectory.toFile())) {
             for (long i = 0; i < totalBlocks; i++)
                 stream.write(readFileBlock(i));

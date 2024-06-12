@@ -171,7 +171,7 @@ public class MainFrame extends JFrame {
             try {
                 Thread.sleep(1000);
             } catch (InterruptedException e) {
-                logger.error("Failed to update task list", e);
+                logger.error("Failed to update task list: {}", e.getMessage());
             }
         }
     }
@@ -186,7 +186,7 @@ public class MainFrame extends JFrame {
                 ge.registerFont(customFont);
             }
         } catch (IOException | FontFormatException e) {
-            logger.error("Failed to load custom font", e);
+            logger.error("Failed to load custom font: {}", e.getMessage());
         }
         return customFont;
     }
@@ -237,7 +237,7 @@ public class MainFrame extends JFrame {
             ConfigManager.dumpToFile();
             ConnectionManager.getInstance().shutdown();
         } catch (IOException e) {
-            logger.error("Failed to dump data to file", e);
+            logger.error("Failed to dump data to file: {}", e.getMessage());
         }
     }
 }

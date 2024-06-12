@@ -64,7 +64,7 @@ public class ConnectionManager extends Thread {
             for (OutgoingConnection outgoingConnection : outgoingConnections.values())
                 outgoingConnection.shutdown();
         } catch (IOException e) {
-            logger.error("Failed to close server socket.", e);
+            logger.error("Failed to close server socket: {}", e.getMessage());
         }
     }
 
@@ -90,7 +90,7 @@ public class ConnectionManager extends Thread {
             } catch (InterruptedException _) {
             }
         } catch (Exception e) {
-            logger.error("Failed to accept connection.", e);
+            logger.error("Failed to accept connection: {}", e.getMessage());
         } finally {
             rwLock.readLock().unlock();
         }
@@ -106,7 +106,7 @@ public class ConnectionManager extends Thread {
             outgoingConnection.start();
             logger.info("Started new connection: {}", uuid);
         } catch (Exception e) {
-            logger.error("Failed to start connection.", e);
+            logger.error("Failed to start connection: {}", e.getMessage());
         } finally {
             rwLock.readLock().unlock();
         }

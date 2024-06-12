@@ -26,7 +26,7 @@ public class TaskManager {
         for (Task task : existingTasks.values())
             if (task.status == Task.TaskStatus.InProgress || task.status == Task.TaskStatus.Failed)
                 if (task.type == Task.TaskType.Send)
-                    ConnectionManager.getInstance().startConnection(task.uuid, task.host, task.port, task.filePath);
+                    ConnectionManager.getInstance().startConnection(task.uuid, task.host, task.port, Path.of(task.filePath));
     }
 
     public static TaskManager getInstance() {
@@ -62,7 +62,6 @@ public class TaskManager {
             HashMap<UUID, Task> result = (HashMap<UUID, Task>) in.readObject();
             return Optional.of(result);
         } catch (IOException | ClassNotFoundException | ClassCastException e) {
-            logger.error("Failed to parse tasks from file.", e);
             logger.info("No exist tasks file found.");
             return Optional.empty();
         }

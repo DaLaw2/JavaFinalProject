@@ -8,7 +8,7 @@ public class Config implements Serializable {
     public int internalTimestamp = 10;
     public int timeoutDuration = 15;
     public int retryDuration = 15;
-    public Path savePath = Path.of(".", "Downloads");
+    public String savePath = Path.of(".", "Downloads").toString();
 
     public Config() {
     }
@@ -18,7 +18,7 @@ public class Config implements Serializable {
         this.internalTimestamp = internalTimestamp;
         this.timeoutDuration = timeoutDuration;
         this.retryDuration = retryDuration;
-        this.savePath = savePath;
+        this.savePath = savePath.toString();
     }
 
     public static Config defaultConfig() {

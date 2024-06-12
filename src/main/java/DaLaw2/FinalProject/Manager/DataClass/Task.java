@@ -21,7 +21,7 @@ public class Task implements Serializable {
     public TaskStatus status;
     public final String host;
     public final int port;
-    public final Path filePath;
+    public final String filePath;
     public final String fileName;
 
     private Task(UUID uuid, TaskType type, String host, int port, Path filePath) {
@@ -30,7 +30,7 @@ public class Task implements Serializable {
         this.status = TaskStatus.InProgress;
         this.host = host;
         this.port = port;
-        this.filePath = filePath;
+        this.filePath = filePath.toString();
         this.fileName = filePath.getFileName().toString();
     }
 
