@@ -67,6 +67,15 @@ public class OutgoingConnection extends Thread {
         }
     }
 
+    public void shutdown() {
+        interrupt();
+        try {
+            socket.close();
+        } catch (IOException e) {
+            logger.error("Failed to close socket.", e);
+        }
+    }
+
     private void sendFileHeader() throws IOException {
         FileHeader fileHeader = new FileHeader(uuid, fileName, fileSize);
         FileHeaderPacket fileHeaderPacket = new FileHeaderPacket(fileHeader);

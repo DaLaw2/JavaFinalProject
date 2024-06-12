@@ -1,5 +1,8 @@
 package DaLaw2.FinalProject.View;
 
+import DaLaw2.FinalProject.Manager.ConfigManager;
+import DaLaw2.FinalProject.Manager.ConnectionManager;
+import DaLaw2.FinalProject.Manager.DataClass.Config;
 import DaLaw2.FinalProject.Manager.TaskManager;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -21,7 +24,7 @@ public class MainFrame extends JFrame {
     public MainFrame() {
         setTitle("檔案傳輸器");
         setSize(900, 600);
-        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
 
         URL iconURL = MainFrame.class.getResource("/icon.png");
         assert iconURL != null;
@@ -40,6 +43,13 @@ public class MainFrame extends JFrame {
         panel.add(taskPanel, BorderLayout.CENTER);
 
         add(panel);
+        addWindowListener(new java.awt.event.WindowAdapter() {
+            @Override
+            public void windowClosing(java.awt.event.WindowEvent windowEvent) {
+                onWindowClosing();
+                System.exit(0);
+            }
+        });
     }
 
     private JPanel createTopPanel() {
@@ -117,6 +127,22 @@ public class MainFrame extends JFrame {
         startTransferButton.setPreferredSize(new Dimension(120, 30));
         topPanel.add(startTransferButton, gbc);
 
+        gbc.gridx = 6;
+        gbc.insets = new Insets(5, 5, 5, 5);
+        URL settingsIconURL = MainFrame.class.getResource("/setting.png");
+        if (settingsIconURL != null) {
+            ImageIcon settingsIcon = new ImageIcon(settingsIconURL);
+            Image image = settingsIcon.getImage();
+            Image newimg = image.getScaledInstance(30, 30, java.awt.Image.SCALE_SMOOTH); // scale it the smooth way
+            settingsIcon = new ImageIcon(newimg);
+            JButton settingsButton = new JButton(settingsIcon);
+            settingsButton.setPreferredSize(new Dimension(30, 30));
+            settingsButton.addActionListener(e -> showConfigDialog());
+            topPanel.add(settingsButton, gbc);
+        } else {
+            logger.error("Settings icon not found.");
+        }
+
         return topPanel;
     }
 
@@ -163,5 +189,55 @@ public class MainFrame extends JFrame {
             logger.error("Failed to load custom font", e);
         }
         return customFont;
+    }
+
+    private void showConfigDialog() {
+        Config currentConfig = ConfigManager.getConfig();
+
+        JTextField acceptPortField = new JTextField(String.valueOf(currentConfig.acceptPort));
+        JTextField internalTimestampField = new JTextField(String.valueOf(currentConfig.internalTimestamp));
+        JTextField timeoutDurationField = new JTextField(String.valueOf(currentConfig.timeoutDuration));
+        JTextField retryDurationField = new JTextField(String.valueOf(currentConfig.retryDuration));
+        JTextField savePathField = new JTextField(currentConfig.savePath.toString());
+
+        JPanel panel = new JPanel(new GridLayout(0, 2));
+        panel.add(new JLabel("Accept Port:"));
+        panel.add(acceptPortField);
+        panel.add(new JLabel("Internal Timestamp (ms):"));
+        panel.add(internalTimestampField);
+        panel.add(new JLabel("Timeout Duration (s):"));
+        panel.add(timeoutDurationField);
+        panel.add(new JLabel("Retry Duration (s):"));
+        panel.add(retryDurationField);
+        panel.add(new JLabel("Save Path:"));
+        panel.add(savePathField);
+
+        int result = JOptionPane.showConfirmDialog(this, panel, "設定", JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE);
+        if (result == JOptionPane.OK_OPTION) {
+            try {
+                int acceptPort = Integer.parseInt(acceptPortField.getText());
+                int internalTimestamp = Integer.parseInt(internalTimestampField.getText());
+                int timeoutDuration = Integer.parseInt(timeoutDurationField.getText());
+                int retryDuration = Integer.parseInt(retryDurationField.getText());
+                Path savePath = Path.of(savePathField.getText());
+                Config newConfig = new Config(acceptPort, internalTimestamp, timeoutDuration, retryDuration, savePath);
+                if (Config.validateConfig(newConfig))
+                    ConfigManager.setConfig(newConfig);
+                else
+                    JOptionPane.showMessageDialog(this, "無效的配置值。", "錯誤", JOptionPane.ERROR_MESSAGE);
+            } catch (Exception e) {
+                JOptionPane.showMessageDialog(this, "無效的配置值。", "錯誤", JOptionPane.ERROR_MESSAGE);
+            }
+        }
+    }
+
+    public void onWindowClosing() {
+        try {
+            TaskManager.dumpToFile();
+            ConfigManager.dumpToFile();
+            ConnectionManager.getInstance().shutdown();
+        } catch (IOException e) {
+            logger.error("Failed to dump data to file", e);
+        }
     }
 }

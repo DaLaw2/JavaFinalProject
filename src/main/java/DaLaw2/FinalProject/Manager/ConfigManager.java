@@ -60,7 +60,8 @@ public class ConfigManager {
         }
     }
 
-    private static void dumpToFile(Config config) throws IOException {
+    public static void dumpToFile() throws IOException {
+        Config config = ConfigManager.getConfig();
         String fileName = ".config";
         FileOutputStream fileOut = new FileOutputStream(fileName);
         ObjectOutputStream out = new ObjectOutputStream(fileOut);

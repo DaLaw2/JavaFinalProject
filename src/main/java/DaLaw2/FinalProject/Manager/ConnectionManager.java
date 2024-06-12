@@ -49,9 +49,8 @@ public class ConnectionManager extends Thread {
 
     @Override
     public void run() {
-        while (!Thread.currentThread().isInterrupted()) {
+        while (!Thread.currentThread().isInterrupted())
             acceptConnection();
-        }
         logger.info("Connection Manager Terminate Complete.");
     }
 
@@ -60,6 +59,10 @@ public class ConnectionManager extends Thread {
         interrupt();
         try {
             serverSocket.close();
+            for (IncomingConnection incomingConnection : incomingConnections.values())
+                incomingConnection.shutdown();
+            for (OutgoingConnection outgoingConnection : outgoingConnections.values())
+                outgoingConnection.shutdown();
         } catch (IOException e) {
             logger.error("Failed to close server socket.", e);
         }
@@ -76,8 +79,8 @@ public class ConnectionManager extends Thread {
             UUID uuid = incomingConnection.getUUID();
             String host = socket.getInetAddress().getHostAddress();
             int port = socket.getPort();
-            String fileName = incomingConnection.getFileName();
-            TaskManager.getInstance().createReceiveTask(uuid, host, port, fileName);
+            Path filePath = incomingConnection.getFilePath();
+            TaskManager.getInstance().createReceiveTask(uuid, host, port, filePath);
             this.incomingConnections.put(uuid, incomingConnection);
             incomingConnection.start();
             logger.info("Accepted new connection: {}", uuid);

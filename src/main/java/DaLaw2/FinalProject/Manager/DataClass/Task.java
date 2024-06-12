@@ -2,7 +2,6 @@ package DaLaw2.FinalProject.Manager.DataClass;
 
 import java.io.Serializable;
 import java.nio.file.Path;
-import java.util.Set;
 import java.util.UUID;
 
 public class Task implements Serializable {
@@ -22,23 +21,25 @@ public class Task implements Serializable {
     public TaskStatus status;
     public final String host;
     public final int port;
+    public final Path filePath;
     public final String fileName;
 
-    private Task(UUID uuid, TaskType type, String host, int port, String fileName) {
+    private Task(UUID uuid, TaskType type, String host, int port, Path filePath) {
         this.uuid = uuid;
         this.type = type;
         this.status = TaskStatus.InProgress;
         this.host = host;
         this.port = port;
-        this.fileName = fileName;
+        this.filePath = filePath;
+        this.fileName = filePath.getFileName().toString();
     }
 
-    public static Task createSendTask(UUID uuid, String host, int port, String fileName) {
-        return new Task(uuid ,TaskType.Send, host, port, fileName);
+    public static Task createSendTask(UUID uuid, String host, int port, Path filePath) {
+        return new Task(uuid, TaskType.Send, host, port, filePath);
     }
 
-    public static Task createReceiveTask(UUID uuid, String host, int port, String fileName) {
-        return new Task(uuid, TaskType.Receive, host, port, fileName);
+    public static Task createReceiveTask(UUID uuid, String host, int port, Path filePath) {
+        return new Task(uuid, TaskType.Receive, host, port, filePath);
     }
 
     public void complete() {

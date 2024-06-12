@@ -1,7 +1,8 @@
 package DaLaw2.FinalProject.Manager;
 
-import DaLaw2.FinalProject.Manager.DataClass.Config;
 import DaLaw2.FinalProject.Manager.DataClass.Task;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import java.io.*;
 import java.nio.file.Path;
@@ -10,8 +11,11 @@ import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
+
 public class TaskManager {
-    private static volatile TaskManager instance = new TaskManager();
+    private static final Logger logger = LogManager.getLogger(TaskManager.class);
+
+    private static final TaskManager instance = new TaskManager();
     private static final ReentrantReadWriteLock rwLock = new ReentrantReadWriteLock();
 
     private final HashMap<UUID, Task> tasks = new HashMap<>();
@@ -20,7 +24,9 @@ public class TaskManager {
         Optional<HashMap<UUID, Task>> parseFromFile = tryParseFromFile();
         HashMap<UUID, Task> existingTasks = parseFromFile.orElseGet(HashMap::new);
         for (Task task : existingTasks.values())
-            addTask(task);
+            if (task.status == Task.TaskStatus.InProgress || task.status == Task.TaskStatus.Failed)
+                if (task.type == Task.TaskType.Send)
+                    ConnectionManager.getInstance().startConnection(task.uuid, task.host, task.port, task.filePath);
     }
 
     public static TaskManager getInstance() {
@@ -47,7 +53,7 @@ public class TaskManager {
         rwLock.writeLock().unlock();
     }
 
-    private Optional<HashMap<UUID, Task>> tryParseFromFile() {
+    private static Optional<HashMap<UUID, Task>> tryParseFromFile() {
         try {
             String fileName = ".tasks";
             FileInputStream fileIn = new FileInputStream(fileName);
@@ -55,12 +61,15 @@ public class TaskManager {
             @SuppressWarnings("unchecked")
             HashMap<UUID, Task> result = (HashMap<UUID, Task>) in.readObject();
             return Optional.of(result);
-        } catch (IOException | ClassNotFoundException | ClassCastException _) {
+        } catch (IOException | ClassNotFoundException | ClassCastException e) {
+            logger.error("Failed to parse tasks from file.", e);
+            logger.info("No exist tasks file found.");
             return Optional.empty();
         }
     }
 
-    private void dumpToFile(HashMap<UUID, Task> tasks) throws IOException {
+    public static void dumpToFile() throws IOException {
+        HashMap<UUID, Task> tasks = TaskManager.getInstance().getTasks();
         String fileName = ".tasks";
         FileOutputStream fileOut = new FileOutputStream(fileName);
         ObjectOutputStream out = new ObjectOutputStream(fileOut);
@@ -69,14 +78,13 @@ public class TaskManager {
 
     public void createSendTask(String host, int port, Path sourcePath) {
         UUID uuid = UUID.randomUUID();
-        String fileName = sourcePath.getFileName().toString();
-        Task sendTask = Task.createSendTask(uuid, host, port, fileName);
+        Task sendTask = Task.createSendTask(uuid, host, port, sourcePath);
         addTask(sendTask);
         ConnectionManager.getInstance().startConnection(uuid, host, port, sourcePath);
     }
 
-    public void createReceiveTask(UUID uuid, String host, int port, String fileName) {
-        Task receiveTask = Task.createReceiveTask(uuid, host, port, fileName);
+    public void createReceiveTask(UUID uuid, String host, int port, Path sourcePath) {
+        Task receiveTask = Task.createReceiveTask(uuid, host, port, sourcePath);
         addTask(receiveTask);
     }
 }

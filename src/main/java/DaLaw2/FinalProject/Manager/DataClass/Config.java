@@ -10,7 +10,15 @@ public class Config implements Serializable {
     public int retryDuration = 15;
     public Path savePath = Path.of(".", "Downloads");
 
-    private Config() {
+    public Config() {
+    }
+
+    public Config(int acceptPort, int internalTimestamp, int timeoutDuration, int retryDuration, Path savePath) {
+        this.acceptPort = acceptPort;
+        this.internalTimestamp = internalTimestamp;
+        this.timeoutDuration = timeoutDuration;
+        this.retryDuration = retryDuration;
+        this.savePath = savePath;
     }
 
     public static Config defaultConfig() {

@@ -78,6 +78,14 @@ public class IncomingConnection extends Thread {
         }
     }
 
+    public void shutdown() {
+        try {
+            socket.close();
+        } catch (IOException e) {
+            logger.error("Failed to close socket", e);
+        }
+    }
+
     private void createTempDirectory() throws IOException {
         if (!Files.exists(tempDirectory)) {
             Files.createDirectories(tempDirectory);
@@ -146,6 +154,10 @@ public class IncomingConnection extends Thread {
 
     public String getFileName() {
         return fileName;
+    }
+
+    public Path getFilePath() {
+        return tempDirectory;
     }
 
     public long getFileSize() {

@@ -24,9 +24,8 @@ public class RoundJButton extends JButton {
     }
 
     public boolean contains(int x, int y) {
-        if (shape == null || !shape.getBounds().equals(getBounds())) {
+        if (shape == null || !shape.getBounds().equals(getBounds()))
             shape = new RoundRectangle2D.Float(0, 0, getWidth(), getHeight(), 15, 15);
-        }
         return shape.contains(x, y);
     }
 }
