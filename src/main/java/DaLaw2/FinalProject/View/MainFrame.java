@@ -22,6 +22,7 @@ import java.util.UUID;
 
 public class MainFrame extends JFrame {
     private static final Logger logger = LogManager.getLogger(MainFrame.class);
+
     private static File selectedFile = null;
 
     public MainFrame() {
@@ -46,6 +47,7 @@ public class MainFrame extends JFrame {
         panel.add(taskPanel, BorderLayout.CENTER);
 
         add(panel);
+
         addWindowListener(new java.awt.event.WindowAdapter() {
             @Override
             public void windowClosing(java.awt.event.WindowEvent windowEvent) {
@@ -55,51 +57,73 @@ public class MainFrame extends JFrame {
         });
     }
 
+    private Font loadCustomFont() {
+        Font customFont = null;
+        try {
+            InputStream is = MainFrame.class.getResourceAsStream("/font.ttf");
+            if (is != null) {
+                customFont = Font.createFont(Font.TRUETYPE_FONT, is).deriveFont(16f);
+                GraphicsEnvironment ge = GraphicsEnvironment.getLocalGraphicsEnvironment();
+                ge.registerFont(customFont);
+            }
+        } catch (IOException | FontFormatException e) {
+            logger.error("Failed to load custom font: {}", e.getMessage());
+        }
+        return customFont;
+    }
+
     private JPanel createTopPanel() {
         JPanel topPanel = new JPanel();
         topPanel.setPreferredSize(new Dimension(900, 50));
         topPanel.setBorder(new LineBorder(Color.BLACK, 1, true));
 
-        Font customFont = loadCustomFont();
-
         JLabel hostLabel = new JLabel("主機位置:");
         JLabel portLabel = new JLabel("埠號:");
-        if (customFont != null) {
-            hostLabel.setFont(customFont);
-            portLabel.setFont(customFont);
-        }
+
+        Font customFont = loadCustomFont();
+        assert customFont != null;
+
+        hostLabel.setFont(customFont);
+        portLabel.setFont(customFont);
 
         RoundJTextField hostField = new RoundJTextField(10);
         RoundJTextField portField = new RoundJTextField(5);
         RoundJButton selectFileButton = new RoundJButton("選擇檔案");
         RoundJButton startTransferButton = new RoundJButton("開始傳輸");
 
-        if (customFont != null) {
-            hostField.setFont(customFont);
-            portField.setFont(customFont);
-            selectFileButton.setFont(customFont);
-            startTransferButton.setFont(customFont);
-        }
+        hostField.setFont(customFont);
+        portField.setFont(customFont);
+        selectFileButton.setFont(customFont);
+        startTransferButton.setFont(customFont);
 
         selectFileButton.addActionListener(_ -> {
             JFileChooser fileChooser = new JFileChooser();
             int result = fileChooser.showOpenDialog(this);
-            if (result == JFileChooser.APPROVE_OPTION) {
+            if (result == JFileChooser.APPROVE_OPTION)
                 selectedFile = fileChooser.getSelectedFile();
-                logger.info("Selected file: {}", selectedFile.getAbsolutePath());
-            }
         });
 
         startTransferButton.addActionListener(_ -> {
-            if (selectedFile != null) {
+            try {
                 String host = hostField.getText();
                 int port = Integer.parseInt(portField.getText());
-                Path sourcePath = Paths.get(selectedFile.getAbsolutePath());
-                TaskManager.getInstance().createSendTask(host, port, sourcePath);
-                logger.info("Starting file transfer for: {}", selectedFile.getAbsolutePath());
-            } else {
-                logger.warn("No file selected for transfer.");
-                JOptionPane.showMessageDialog(this, "請先選擇檔案。", "錯誤", JOptionPane.ERROR_MESSAGE);
+                if (host.isEmpty() || port == 0 || port > 65535) {
+                    logger.warn("Invalid host or port.");
+                    JOptionPane.showMessageDialog(this, "請輸入有效的主機位置和埠號。", "錯誤", JOptionPane.ERROR_MESSAGE);
+                } else if (selectedFile == null) {
+                    logger.warn("No file selected for transfer.");
+                    JOptionPane.showMessageDialog(this, "請先選擇檔案。", "錯誤", JOptionPane.ERROR_MESSAGE);
+                } else {
+                    Path sourcePath = Paths.get(selectedFile.getAbsolutePath());
+                    TaskManager.getInstance().createSendTask(host, port, sourcePath);
+                    logger.info("Starting file transfer for: {}", selectedFile.getAbsolutePath());
+                }
+            } catch (NumberFormatException _) {
+                logger.error("Invalid port number.");
+                JOptionPane.showMessageDialog(this, "請輸入有效的主機位置和埠號。", "錯誤", JOptionPane.ERROR_MESSAGE);
+            } catch (Exception e) {
+                logger.error("Failed to start transfer: {}", e.getMessage());
+                JOptionPane.showMessageDialog(this, "無法開始傳輸。", "錯誤", JOptionPane.ERROR_MESSAGE);
             }
         });
 
@@ -132,19 +156,17 @@ public class MainFrame extends JFrame {
 
         gbc.gridx = 6;
         gbc.insets = new Insets(5, 5, 5, 5);
+
         URL settingsIconURL = MainFrame.class.getResource("/setting.png");
-        if (settingsIconURL != null) {
-            ImageIcon settingsIcon = new ImageIcon(settingsIconURL);
-            Image image = settingsIcon.getImage();
-            Image newimg = image.getScaledInstance(30, 30, java.awt.Image.SCALE_SMOOTH); // scale it the smooth way
-            settingsIcon = new ImageIcon(newimg);
-            JButton settingsButton = new JButton(settingsIcon);
-            settingsButton.setPreferredSize(new Dimension(30, 30));
-            settingsButton.addActionListener(e -> showConfigDialog());
-            topPanel.add(settingsButton, gbc);
-        } else {
-            logger.error("Settings icon not found.");
-        }
+        assert settingsIconURL != null;
+        ImageIcon settingsIcon = new ImageIcon(settingsIconURL);
+        Image image = settingsIcon.getImage();
+        Image newimg = image.getScaledInstance(30, 30, java.awt.Image.SCALE_SMOOTH);
+        settingsIcon = new ImageIcon(newimg);
+        JButton settingsButton = new JButton(settingsIcon);
+        settingsButton.setPreferredSize(new Dimension(30, 30));
+        settingsButton.addActionListener(_ -> showConfigDialog());
+        topPanel.add(settingsButton, gbc);
 
         return topPanel;
     }
@@ -203,21 +225,6 @@ public class MainFrame extends JFrame {
         }
     }
 
-    private Font loadCustomFont() {
-        Font customFont = null;
-        try {
-            InputStream is = MainFrame.class.getResourceAsStream("/font.ttf");
-            if (is != null) {
-                customFont = Font.createFont(Font.TRUETYPE_FONT, is).deriveFont(16f);
-                GraphicsEnvironment ge = GraphicsEnvironment.getLocalGraphicsEnvironment();
-                ge.registerFont(customFont);
-            }
-        } catch (IOException | FontFormatException e) {
-            logger.error("Failed to load custom font: {}", e.getMessage());
-        }
-        return customFont;
-    }
-
     private void showConfigDialog() {
         Config currentConfig = ConfigManager.getConfig();
 
@@ -225,18 +232,18 @@ public class MainFrame extends JFrame {
         JTextField internalTimestampField = new JTextField(String.valueOf(currentConfig.internalTimestamp));
         JTextField timeoutDurationField = new JTextField(String.valueOf(currentConfig.timeoutDuration));
         JTextField retryDurationField = new JTextField(String.valueOf(currentConfig.retryDuration));
-        JTextField savePathField = new JTextField(currentConfig.savePath.toString());
+        JTextField savePathField = new JTextField(currentConfig.savePath);
 
         JPanel panel = new JPanel(new GridLayout(0, 2));
-        panel.add(new JLabel("Accept Port:"));
+        panel.add(new JLabel("綁定埠號(重開後生效):"));
         panel.add(acceptPortField);
-        panel.add(new JLabel("Internal Timestamp (ms):"));
+        panel.add(new JLabel("內部時間戳(豪秒):"));
         panel.add(internalTimestampField);
-        panel.add(new JLabel("Timeout Duration (s):"));
+        panel.add(new JLabel("超時時間(秒):"));
         panel.add(timeoutDurationField);
-        panel.add(new JLabel("Retry Duration (s):"));
+        panel.add(new JLabel("重試間隔(秒):"));
         panel.add(retryDurationField);
-        panel.add(new JLabel("Save Path:"));
+        panel.add(new JLabel("儲存路徑:"));
         panel.add(savePathField);
 
         int result = JOptionPane.showConfirmDialog(this, panel, "設定", JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE);
@@ -259,6 +266,7 @@ public class MainFrame extends JFrame {
     }
 
     public void onWindowClosing() {
+        removeWindowListener(getWindowListeners()[0]);
         try {
             TaskManager.dumpToFile();
             ConfigManager.dumpToFile();
