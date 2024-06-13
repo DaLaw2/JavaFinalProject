@@ -35,7 +35,7 @@ public class ConfigManager {
         }
     }
 
-    public static void setConfig(Config config) throws IOException, IllegalArgumentException {
+    public static void setConfig(Config config) throws IllegalArgumentException {
         if (!Config.validateConfig(config)) {
             throw new IllegalArgumentException("Invalid config");
         }

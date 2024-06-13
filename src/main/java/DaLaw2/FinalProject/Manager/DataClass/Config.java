@@ -1,7 +1,6 @@
 package DaLaw2.FinalProject.Manager.DataClass;
 
 import java.io.Serializable;
-import java.nio.file.Files;
 import java.nio.file.Path;
 
 public class Config implements Serializable {
@@ -33,9 +32,7 @@ public class Config implements Serializable {
             return false;
         if (!validateSecond(config.timeoutDuration))
             return false;
-        if (!validateSecond(config.retryDuration))
-            return false;
-        return validatePath(config.savePath);
+        return validateSecond(config.retryDuration);
     }
 
     private static boolean validatePort(int port) {
@@ -48,14 +45,5 @@ public class Config implements Serializable {
 
     private static boolean validateSecond(int duration) {
         return duration >= 1 && duration <= 3600;
-    }
-
-    private static boolean validatePath(String path) {
-        try {
-            Path _path = Path.of(path);
-            return Files.exists(_path);
-        } catch (Exception e) {
-            return false;
-        }
     }
 }

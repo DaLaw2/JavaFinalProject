@@ -11,7 +11,6 @@ import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
-
 public class TaskManager {
     private static final Logger logger = LogManager.getLogger(TaskManager.class);
 
